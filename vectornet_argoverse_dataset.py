@@ -62,8 +62,6 @@ class ArgoverseVectornetDataset(Dataset):
         road_polyline[road_polyline_mask] = temp
         road_polyline[road_zero_vector_mask] = 0
 
-        #TODO: FIX (since the polylines start and end in variable indices the last point in the list isnt always
-        #the last in the sequance (may be zero))
         #get the mask for the transition point from nonzero to zero vector
         agent_last_item_mask = ~agent_zero_vector_mask & torch.roll(agent_zero_vector_mask, shifts=-1, dims=-1)
         #since all-nonzero polylines dont have a transition, add a true value regardless 
