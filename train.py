@@ -24,7 +24,7 @@ class PolylineSubgraphLayer(nn.Module):
 
         self.aggregate = nn.AdaptiveMaxPool1d(1)
     
-    def forward(self, x: torch.Tensor, road_polyline_length=8, agent_polyline_length=None):
+    def forward(self, x: torch.Tensor, road_polyline_length=9, agent_polyline_length=None):
         N = x.shape[0]
         agent_polyline_length = agent_polyline_length if agent_polyline_length is not None else x.shape[-2]
         nonzero_vectors_mask = ~torch.all((torch.abs(x) < 1e-6), dim=-1)
@@ -62,7 +62,7 @@ class VectorNet(nn.Module):
         self.aggregate = nn.AdaptiveMaxPool1d(1)
         self.attention = nn.MultiheadAttention(initial_node_dims*8, 1, batch_first=True)
 
-    def forward(self, x: torch.Tensor, road_polyline_length=8, agent_polyline_length=None)->torch.Tensor:
+    def forward(self, x: torch.Tensor, road_polyline_length=9, agent_polyline_length=None)->torch.Tensor:
         N = x.shape[0]
 
         x = self.subgraph_layer_1(x, road_polyline_length=road_polyline_length, agent_polyline_length=agent_polyline_length)
@@ -72,32 +72,24 @@ class VectorNet(nn.Module):
         x = torch.unflatten(torch.movedim(self.aggregate(torch.movedim(torch.flatten(x, 0,1), -2, -1)), -1, -2), 0, (N,-1))
         x = torch.squeeze(x)
 
-
         agent_polyline_length = agent_polyline_length if agent_polyline_length is not None else x.shape[-2]
         nonzero_polyline_mask = ~torch.all((torch.abs(x) < 1e-6), dim=-1)
         agent_polyline_count = torch.sum(nonzero_polyline_mask[:,:self.max_agent_polyline_count], dim=-1)
         road_polyline_count = torch.sum(nonzero_polyline_mask[:,self.max_agent_polyline_count:], dim=-1)
         
-        mask = torch.zeros(x.shape[0], x.shape[1], x.shape[1], dtype=torch.bool)
-
         agent_range_tensor = torch.arange(self.max_agent_polyline_count)
         agent_mask = (agent_range_tensor.unsqueeze(0) < agent_polyline_count.unsqueeze(-1))
-        agent_mask_square = agent_mask.unsqueeze(-1) & agent_mask.unsqueeze(-2)
-        mask[:,:self.max_agent_polyline_count,:self.max_agent_polyline_count] |= agent_mask_square
-
 
         road_range_tensor = torch.arange(self.max_road_polyline_count)
         road_mask = (road_range_tensor.unsqueeze(0) < road_polyline_count.unsqueeze(-1))
-        road_mask_square = road_mask.unsqueeze(-1) & road_mask.unsqueeze(-2)
-        mask[:,self.max_agent_polyline_count:,self.max_agent_polyline_count:] |=road_mask_square
 
-        # mask = ~torch.zeros(x.shape[0], x.shape[1], x.shape[1], dtype=torch.bool)
-        # print(mask)
-        x, _ = self.attention(x,x,x, attn_mask=mask)
+        mask_1d = torch.cat((agent_mask, road_mask), dim=-1)
+        mask = mask_1d.unsqueeze(-1) & mask_1d.unsqueeze(-2)
 
-        output_mask = torch.broadcast_to(torch.cat((agent_mask, road_mask), dim=-1).unsqueeze(-1), x.shape)
+        x, _ = self.attention(x,x,x, attn_mask=~mask)
+
+        output_mask = torch.broadcast_to(torch.cat((agent_mask, torch.zeros_like(road_mask)), dim=-1).unsqueeze(-1), x.shape)
         x[~output_mask] = 0
-
         return x
     
 if __name__ == "__main__":
@@ -111,20 +103,23 @@ if __name__ == "__main__":
     print(len(test_set))
 
     training_loader = DataLoader(training_set, batch_size=64)
-    test_loader = DataLoader(test_set, batch_size=64)
+    test_loader = DataLoader(test_set, batch_size=64, num_workers=1)
     # model = PolylineSubgraphLayer(6)
     model = VectorNet(6)
-
+    
     loss_fn = nn.BCELoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
     for epoch in range(1):
         model.train()
         print("-"*5 + f"EPOCH: {epoch}" + "-"*5)
-
+        start = time.time()
         for i, (x, y) in enumerate(test_loader):
             model.train()
             y_pred = model(x)
+            # if i % 100 == 0:
+            #     print(i/len(test_loader)*100, (time.time()-start)*(len(test_loader)/(1 if i == 0 else i)))
             break
+        print(time.time()-start)
         #     loss = loss_fn(y_pred, y)
 
         #     optimizer.zero_grad()
