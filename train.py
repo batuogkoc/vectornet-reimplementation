@@ -15,11 +15,14 @@ from vectornet_argoverse_dataset import *
 from torch.utils.tensorboard import SummaryWriter
 
 class PolylineSubgraphLayer(nn.Module):
-    def __init__(self, node_dims):
+    def __init__(self, input_node_dim, hidden_layer_dim):
         super().__init__()
 
-        self.encoder = nn.Linear(node_dims, node_dims)
+        self.encoder = nn.Linear(input_node_dim, hidden_layer_dim)
         nn.init.xavier_uniform_(self.encoder.weight)
+        #TODO: check if the correct number of dimentions is goven
+        #i.e. shall we only normalize over embedding vectors or should we do it over polylines as well?
+        self.layer_norm = nn.LayerNorm(hidden_layer_dim)
 
         self.aggregate = nn.AdaptiveMaxPool1d(1)
     
@@ -28,8 +31,8 @@ class PolylineSubgraphLayer(nn.Module):
         nonzero_vectors_mask = ~torch.all((torch.abs(x) < 1e-6), dim=-1)
 
         x = self.encoder(x)
+        x = self.layer_norm(x)
         x = F.relu(x)
-        #TODO: add layernorm
 
         #NOTE: Important hotfix: if you dont call clone, the gradient calculations fail. (MAY BE KILLING GRADIENT FLOW!!)
         x = x.clone()
@@ -50,13 +53,13 @@ class VectorNet(nn.Module):
         self.max_agent_polyline_count=max_agent_polyline_count
         self.max_road_polyline_count=max_road_polyline_count
 
-        self.subgraph_layer_1 = PolylineSubgraphLayer(initial_node_dims*1)
-        self.subgraph_layer_2 = PolylineSubgraphLayer(initial_node_dims*2)
-        self.subgraph_layer_3 = PolylineSubgraphLayer(initial_node_dims*4)
+        self.subgraph_layer_1 = PolylineSubgraphLayer(initial_node_dims, 64)
+        self.subgraph_layer_2 = PolylineSubgraphLayer(128, 64)
+        self.subgraph_layer_3 = PolylineSubgraphLayer(128, 64)
 
         self.aggregate = nn.AdaptiveMaxPool1d(1)
-        self.attention = nn.MultiheadAttention(initial_node_dims*8, 1, batch_first=True)
-        self.trajectory_decoder = nn.Linear(initial_node_dims*8, initial_node_dims)
+        self.attention = nn.MultiheadAttention(128, 1, batch_first=True)
+        self.trajectory_decoder = nn.Linear(128, initial_node_dims)
 
     def forward(self, x: torch.Tensor, agent_polyline_length=None)->torch.Tensor:
         N = x.shape[0]
