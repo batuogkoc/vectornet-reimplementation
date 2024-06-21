@@ -1,13 +1,10 @@
 import h5py
 import numpy as np
-import matplotlib.pyplot as plt
 
 import torch
 from torch.utils.data import Dataset, DataLoader
 import torch.nn as nn
 import torch.nn.functional as F
-import torchvision.datasets
-import torchvision.transforms as transforms
 import time
 
 class ArgoverseVectornetDataset(Dataset):
@@ -87,31 +84,36 @@ class ArgoverseVectornetDataset(Dataset):
 
         return ret_x.clone(), ret_y.clone()
 
+class CachedArgoverseVectornetDataset():
+    pass
+
 if __name__ == "__main__":
     # FILE_PATH = "../AutoBots/h5_files/test_dataset.hdf5"
-    FILE_PATH = "../AutoBots/h5_files/train_dataset.hdf5"
+    FILE_PATH = "../h5_files/train_dataset.hdf5"
 
     dataset = ArgoverseVectornetDataset(FILE_PATH)
-    # # for i in range(1):
-    x, y = dataset[0]
+    X = []
+    Y = []
+    start = time.time()
 
-    # print(x.shape)
-    # print(y.shape)
-    print(torch.sum(x, dim=(-2, -1)))
-    print(torch.sum(y, dim=-1))
-    # print(y[:5])
-    # print(torch.all(abs(x) < 1e-6, dim=-1)[:17])
-
-    # loader = DataLoader(dataset, 64, shuffle=True, num_workers=8)
-    # device = torch.device("cpu")
-    # print(len(dataset))
-    # for epoch in range(10):
-    #     print(epoch)
-    #     n = 0
-    #     start = time.time()
-    #     for i, (x,y) in enumerate(loader):
-    #         if n % 100 == 0:
-    #             print((i/(len(loader)))*100)
-    #         n += 1
-    #     print(time.time()-start)
-    #     print(n)
+    with h5py.File("cached_train_dataset.hdf5", "w") as f:
+        X = f.create_dataset("X", (len(dataset), *dataset[0][0].shape), dtype=float)
+        Y = f.create_dataset("Y", (len(dataset), *dataset[0][1].shape), dtype=float)
+        for i, (x, y) in enumerate(dataset):
+            # x = torch.unsqueeze(x, dim=0)
+            # y = torch.unsqueeze(y, dim=0)
+            # if X is None:
+            #     X = x
+            #     Y = y
+            #     continue
+            X[i] = x
+            Y[i] = y
+            if i%100==0 and i!=0:
+                fraction_done = i/len(dataset)
+                time_taken = time.time()-start
+                print(f"{i} | {len(dataset)} | {fraction_done*100}% | time taken: {time_taken} | eta: {time_taken/fraction_done*(1-fraction_done)} | total est: {time_taken/fraction_done}")
+                print(X.shape, Y.shape)
+            # X = torch.cat((X, x), dim=0)
+            # Y = torch.cat((Y, y), dim=0)
+        
+    

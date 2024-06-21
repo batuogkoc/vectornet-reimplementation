@@ -1,0 +1,164 @@
+
+======================================================================================
+SLURM_NODELIST=be12
+SLURM_JOB_NAME=Vectornet-BGUNDUZ21
+XDG_SESSION_ID=c24905
+SLURMD_NODENAME=be12
+SLURM_TOPOLOGY_ADDR=be12
+SLURM_NTASKS_PER_NODE=4
+HOSTNAME=be12
+TERM_PROGRAM=vscode
+SLURM_PRIO_PROCESS=0
+SSL_CERT_FILE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+SLURM_NODE_ALIASES=(null)
+SLURM_GPUS_ON_NODE=1
+SHELL=/bin/bash
+TERM=xterm-256color
+SLURM_JOB_QOS=users
+HISTSIZE=1000
+TMPDIR=/tmp
+SLURM_TOPOLOGY_ADDR_PATTERN=node
+SSH_CLIENT=172.24.4.132 51826 22
+CONDA_SHLVL=2
+TERM_PROGRAM_VERSION=1.90.0
+CONDA_PROMPT_MODIFIER=(vectornet-reimpl) 
+QTDIR=/usr/lib64/qt-3.3
+SLURM_JOB_GPUS=0
+QTINC=/usr/lib64/qt-3.3/include
+SLURM_MEM_PER_CPU=4096
+QT_GRAPHICSSYSTEM_CHECKED=1
+ROCR_VISIBLE_DEVICES=0
+SLURM_NNODES=1
+USER=bgunduz21
+LS_COLORS=rs=0:di=38;5;27:ln=38;5;51:mh=44;38;5;15:pi=40;38;5;11:so=38;5;13:do=38;5;5:bd=48;5;232;38;5;11:cd=48;5;232;38;5;3:or=48;5;232;38;5;9:mi=05;48;5;232;38;5;15:su=48;5;196;38;5;15:sg=48;5;11;38;5;16:ca=48;5;196;38;5;226:tw=48;5;10;38;5;16:ow=48;5;10;38;5;21:st=48;5;21;38;5;15:ex=38;5;34:*.tar=38;5;9:*.tgz=38;5;9:*.arc=38;5;9:*.arj=38;5;9:*.taz=38;5;9:*.lha=38;5;9:*.lz4=38;5;9:*.lzh=38;5;9:*.lzma=38;5;9:*.tlz=38;5;9:*.txz=38;5;9:*.tzo=38;5;9:*.t7z=38;5;9:*.zip=38;5;9:*.z=38;5;9:*.Z=38;5;9:*.dz=38;5;9:*.gz=38;5;9:*.lrz=38;5;9:*.lz=38;5;9:*.lzo=38;5;9:*.xz=38;5;9:*.bz2=38;5;9:*.bz=38;5;9:*.tbz=38;5;9:*.tbz2=38;5;9:*.tz=38;5;9:*.deb=38;5;9:*.rpm=38;5;9:*.jar=38;5;9:*.war=38;5;9:*.ear=38;5;9:*.sar=38;5;9:*.rar=38;5;9:*.alz=38;5;9:*.ace=38;5;9:*.zoo=38;5;9:*.cpio=38;5;9:*.7z=38;5;9:*.rz=38;5;9:*.cab=38;5;9:*.jpg=38;5;13:*.jpeg=38;5;13:*.gif=38;5;13:*.bmp=38;5;13:*.pbm=38;5;13:*.pgm=38;5;13:*.ppm=38;5;13:*.tga=38;5;13:*.xbm=38;5;13:*.xpm=38;5;13:*.tif=38;5;13:*.tiff=38;5;13:*.png=38;5;13:*.svg=38;5;13:*.svgz=38;5;13:*.mng=38;5;13:*.pcx=38;5;13:*.mov=38;5;13:*.mpg=38;5;13:*.mpeg=38;5;13:*.m2v=38;5;13:*.mkv=38;5;13:*.webm=38;5;13:*.ogm=38;5;13:*.mp4=38;5;13:*.m4v=38;5;13:*.mp4v=38;5;13:*.vob=38;5;13:*.qt=38;5;13:*.nuv=38;5;13:*.wmv=38;5;13:*.asf=38;5;13:*.rm=38;5;13:*.rmvb=38;5;13:*.flc=38;5;13:*.avi=38;5;13:*.fli=38;5;13:*.flv=38;5;13:*.gl=38;5;13:*.dl=38;5;13:*.xcf=38;5;13:*.xwd=38;5;13:*.yuv=38;5;13:*.cgm=38;5;13:*.emf=38;5;13:*.axv=38;5;13:*.anx=38;5;13:*.ogv=38;5;13:*.ogx=38;5;13:*.aac=38;5;45:*.au=38;5;45:*.flac=38;5;45:*.mid=38;5;45:*.midi=38;5;45:*.mka=38;5;45:*.mp3=38;5;45:*.mpc=38;5;45:*.ogg=38;5;45:*.ra=38;5;45:*.wav=38;5;45:*.axa=38;5;45:*.oga=38;5;45:*.spx=38;5;45:*.xspf=38;5;45:
+CONDA_EXE=/kuacc/apps/anaconda/3.21.05/bin/conda
+SLURM_JOBID=1256961
+SLURM_NTASKS=4
+VIRTUAL_ENV=/scratch/users/bgunduz21/projects/vectornet/vectornet-reimplementation/venv
+_CE_CONDA=
+CONDA_PREFIX_1=/kuacc/apps/anaconda/3.21.05
+SLURM_TASKS_PER_NODE=4
+MAIL=/var/spool/mail/bgunduz21
+PATH=/kuacc/apps/anaconda/3.21.05:/scratch/users/bgunduz21/.vscode-server/extensions/ms-python.python-2024.8.1/python_files/deactivate/bash:/scratch/users/bgunduz21/projects/vectornet/vectornet-reimplementation/venv/bin:/kuacc/users/bgunduz21/.conda/envs/vectornet-reimpl/bin:/kuacc/apps/anaconda/3.21.05/condabin:/scratch/users/bgunduz21/.vscode-server/extensions/ms-python.python-2024.8.1/python_files/deactivate/bash:/scratch/users/bgunduz21/projects/vectornet/vectornet-reimplementation/venv/bin:/scratch/users/bgunduz21/.vscode-server/cli/servers/Stable-89de5a8d4d6205e5b11647eb6a74844ca23d2573/server/bin/remote-cli:/usr/lib64/qt-3.3/bin:/usr/local/bin:/usr/bin:/kuacc/apps/scripts:/usr/local/sbin:/usr/sbin:/kuacc/apps/scripts:/kuacc/users/bgunduz21/.local/bin:/kuacc/users/bgunduz21/bin:/kuacc/apps/scripts
+SLURM_WORKING_CLUSTER=kuacc:headnode01:6817:9728:101
+SLURM_CONF=/etc/slurm/slurm.conf
+SLURM_JOB_ID=1256961
+CONDA_PREFIX=/kuacc/users/bgunduz21/.conda/envs/vectornet-reimpl
+SLURM_JOB_USER=bgunduz21
+PWD=/kuacc/users/bgunduz21/projects/vectornet/vectornet-reimplementation
+CUDA_VISIBLE_DEVICES=0
+_LMFILES_=/kuacc/etc/mod/anaconda/3.21.05
+LANG=en_US.UTF-8
+MODULEPATH=/kuacc/etc/mod
+SLURM_JOB_UID=1113171
+LOADEDMODULES=anaconda/3.21.05
+KDEDIRS=/usr
+SLURM_NODEID=0
+VSCODE_GIT_ASKPASS_EXTRA_ARGS=
+SLURM_SUBMIT_DIR=/scratch/users/bgunduz21/projects/vectornet/vectornet-reimplementation
+SLURM_TASK_PID=53269
+ZE_AFFINITY_MASK=0
+SLURM_NPROCS=4
+SLURM_CPUS_ON_NODE=4
+SLURM_PROCID=0
+ENVIRONMENT=BATCH
+SSL_CERT_DIR=/etc/pki/tls/certs
+SSH_ASKPASS=/usr/libexec/openssh/gnome-ssh-askpass
+HISTCONTROL=ignoredups
+_CE_M=
+SLURM_JOB_NODELIST=be12
+SHLVL=6
+HOME=/kuacc/users/bgunduz21
+SLURM_LOCALID=0
+VSCODE_GIT_ASKPASS_MAIN=/scratch/users/bgunduz21/.vscode-server/cli/servers/Stable-89de5a8d4d6205e5b11647eb6a74844ca23d2573/server/extensions/git/dist/askpass-main.js
+SLURM_JOB_GID=200513
+SLURM_JOB_CPUS_PER_NODE=4
+SLURM_CLUSTER_NAME=kuacc
+SLURM_GTIDS=0
+SLURM_SUBMIT_HOST=login02.kuacc.ku.edu.tr
+SLURM_JOB_PARTITION=short
+LOGNAME=bgunduz21
+CONDA_PYTHON_EXE=/kuacc/apps/anaconda/3.21.05/bin/python
+QTLIB=/usr/lib64/qt-3.3/lib
+GPU_DEVICE_ORDINAL=0
+SLURM_JOB_ACCOUNT=users
+XDG_DATA_DIRS=/kuacc/users/bgunduz21/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share
+SSH_CONNECTION=172.24.4.132 51826 172.20.238.2 22
+VSCODE_GIT_IPC_HANDLE=/run/user/1113171/vscode-git-ed5bdd0f99.sock
+SLURM_JOB_NUM_NODES=1
+MODULESHOME=/usr/share/Modules
+VSCODE_IPC_HOOK_CLI=/run/user/1113171/vscode-ipc-2ca0dbf2-5e4c-4a08-94de-1c1e8c5b5ed3.sock
+LESSOPEN=||/usr/bin/lesspipe.sh %s
+CONDA_DEFAULT_ENV=vectornet-reimpl
+BROWSER=/scratch/users/bgunduz21/.vscode-server/cli/servers/Stable-89de5a8d4d6205e5b11647eb6a74844ca23d2573/server/bin/helpers/browser.sh
+GIT_ASKPASS=/scratch/users/bgunduz21/.vscode-server/cli/servers/Stable-89de5a8d4d6205e5b11647eb6a74844ca23d2573/server/extensions/git/dist/askpass.sh
+VSCODE_GIT_ASKPASS_NODE=/scratch/users/bgunduz21/.vscode-server/cli/servers/Stable-89de5a8d4d6205e5b11647eb6a74844ca23d2573/server/node
+XDG_RUNTIME_DIR=/run/user/1113171
+QT_PLUGIN_PATH=/usr/lib64/kde4/plugins:/usr/lib/kde4/plugins
+COLORTERM=truecolor
+BASH_FUNC_module()=() {  eval `/usr/bin/modulecmd bash $*`
+}
+_=/usr/bin/env
+======================================================================================
+
+Setting stack size to unlimited...
+core file size          (blocks, -c) 0
+data seg size           (kbytes, -d) unlimited
+scheduling priority             (-e) 0
+file size               (blocks, -f) unlimited
+pending signals                 (-i) 514840
+max locked memory       (kbytes, -l) unlimited
+max memory size         (kbytes, -m) 16777216
+open files                      (-n) 65535
+pipe size            (512 bytes, -p) 8
+POSIX message queues     (bytes, -q) 819200
+real-time priority              (-r) 0
+stack size              (kbytes, -s) unlimited
+cpu time               (seconds, -t) unlimited
+max user processes              (-u) 4096
+virtual memory          (kbytes, -v) unlimited
+file locks                      (-x) unlimited
+
+Running Job...!
+===============================================================================
+Activating Conda Env
+no change     /kuacc/apps/anaconda/3.21.05/condabin/conda
+no change     /kuacc/apps/anaconda/3.21.05/bin/conda
+no change     /kuacc/apps/anaconda/3.21.05/bin/conda-env
+no change     /kuacc/apps/anaconda/3.21.05/bin/activate
+no change     /kuacc/apps/anaconda/3.21.05/bin/deactivate
+no change     /kuacc/apps/anaconda/3.21.05/etc/profile.d/conda.sh
+no change     /kuacc/apps/anaconda/3.21.05/etc/fish/conf.d/conda.fish
+no change     /kuacc/apps/anaconda/3.21.05/shell/condabin/Conda.psm1
+no change     /kuacc/apps/anaconda/3.21.05/shell/condabin/conda-hook.ps1
+no change     /kuacc/apps/anaconda/3.21.05/lib/python3.8/site-packages/xontrib/conda.xsh
+no change     /kuacc/apps/anaconda/3.21.05/etc/profile.d/conda.csh
+no change     /kuacc/users/bgunduz21/.bashrc
+No action taken.
+
+CommandNotFoundError: Your shell has not been properly configured to use 'conda activate'.
+To initialize your shell, run
+
+    $ conda init <SHELL_NAME>
+
+Currently supported shells are:
+  - bash
+  - fish
+  - tcsh
+  - xonsh
+  - zsh
+  - powershell
+
+See 'conda init --help' for more information and options.
+
+IMPORTANT: You may need to close and restart your shell after running 'conda init'.
+
+
+Python version
+(3, 8, 8, 'final', 0)
+Running Python script...
+/kuacc/apps/anaconda/3.21.05/bin/python3
+Traceback (most recent call last):
+  File "train.py", line 3, in <module>
+    import torch
+ModuleNotFoundError: No module named 'torch'

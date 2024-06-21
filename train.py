@@ -1,13 +1,9 @@
-import h5py
 import numpy as np
-import matplotlib.pyplot as plt
 
 import torch
 from torch.utils.data import Dataset, DataLoader
 import torch.nn as nn
 import torch.nn.functional as F
-import torchvision.datasets
-import torchvision.transforms as transforms
 import time
 from datetime import datetime
 import os
@@ -79,10 +75,10 @@ class VectorNet(nn.Module):
         agent_polyline_count = torch.sum(nonzero_polyline_mask[:,:self.max_agent_polyline_count], dim=-1)
         road_polyline_count = torch.sum(nonzero_polyline_mask[:,self.max_agent_polyline_count:], dim=-1)
         
-        agent_range_tensor = torch.arange(self.max_agent_polyline_count)
+        agent_range_tensor = torch.arange(self.max_agent_polyline_count, device=x.device)
         agent_mask = (agent_range_tensor.unsqueeze(0) < agent_polyline_count.unsqueeze(-1))
 
-        road_range_tensor = torch.arange(self.max_road_polyline_count)
+        road_range_tensor = torch.arange(self.max_road_polyline_count, device=x.device)
         road_mask = (road_range_tensor.unsqueeze(0) < road_polyline_count.unsqueeze(-1))
 
         mask_1d = torch.cat((agent_mask, road_mask), dim=-1)
@@ -100,26 +96,23 @@ class VectorNet(nn.Module):
         return x
     
 if __name__ == "__main__":
-    torch.manual_seed(42)
+    # torch.manual_seed(42)
     # torch.autograd.anomaly_mode.set_detect_anomaly(True)
-    device = torch.device("cpu")
-    # device = torch.device("cuda")
+    # device = torch.device("cpu")
+    device = torch.device("cuda")
 
-    H5_FOLDER_PATH = "../AutoBots/h5_files"
+    H5_FOLDER_PATH = "../h5_files"
 
     train_set = ArgoverseVectornetDataset(os.path.join(H5_FOLDER_PATH, "train_dataset.hdf5"))
     test_set = ArgoverseVectornetDataset(os.path.join(H5_FOLDER_PATH, "test_dataset.hdf5"))
 
     print(len(train_set))
     print(len(test_set))
+    NUM_WORKERS = 2
+    train_loader = DataLoader(train_set, batch_size=64, num_workers=NUM_WORKERS, shuffle=True)
+    test_loader = DataLoader(test_set, batch_size=64, num_workers=NUM_WORKERS, shuffle=True)
 
-    train_loader = DataLoader(train_set, batch_size=64, num_workers=2, shuffle=True)
-    test_loader = DataLoader(test_set, batch_size=64, num_workers=2, shuffle=True)
-    
-    EXPERIMENT_DATE_TIME = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-    CHECKPOINT_FOLDER = f"runs/{EXPERIMENT_DATE_TIME}"
-    writer = SummaryWriter(f'runs_tensorboard/{EXPERIMENT_DATE_TIME}')
-    os.makedirs(CHECKPOINT_FOLDER, exist_ok=True)
+    START_EPOCH = 0
 
     model = VectorNet(6).to(device)
     
@@ -127,8 +120,29 @@ if __name__ == "__main__":
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 5, 0.3)
+    
+    LOAD_PROGRESS_PATH = "runs/2024-06-20T15:23:33/e-8-train_l-813.9820446734548-test_loss-869.9771018757278.pt"
+    if LOAD_PROGRESS_PATH:
+        CHECKPOINT_FOLDER, _ = os.path.split(LOAD_PROGRESS_PATH)
+        path_components = os.path.normpath(LOAD_PROGRESS_PATH).split(os.sep)
+        EXPERIMENT_DATE_TIME = path_components[1]
+        state = torch.load(LOAD_PROGRESS_PATH, map_location=device)
+        if "epoch" in state and not "epoch_progress" in state:
+            START_EPOCH = state["epoch"] + 1
+        else:
+            assert False, "Must start progress from a finished epoch"
+        
+        model.load_state_dict(state["model_state_dict"])
+        optimizer.load_state_dict(state["optim_state_dict"])
+        print(state.keys())
+    else:
+        EXPERIMENT_DATE_TIME = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        CHECKPOINT_FOLDER = f"runs/{EXPERIMENT_DATE_TIME}"
 
-    for epoch in range(25):
+    writer = SummaryWriter(f'runs_tensorboard/{EXPERIMENT_DATE_TIME}')
+    os.makedirs(CHECKPOINT_FOLDER, exist_ok=True)
+
+    for epoch in range(START_EPOCH, 25):
         print("-"*5 + f"EPOCH: {epoch}" + "-"*5)
         start = time.time()
         train_loss = 0
@@ -149,7 +163,7 @@ if __name__ == "__main__":
             running_average_training_loss = train_loss/max((i*train_loader.batch_size), 1)
             if i % 10 == 0 and i != 0:
                 writer.add_scalar("running_average_training_loss", running_average_training_loss, epoch*len(train_loader) + i)
-                fraction_done = max(i/len(test_loader), 1e-6)
+                fraction_done = max(i/len(train_loader), 1e-6)
                 time_taken = (time.time()-start)
                 print(f"i: {i}| loss: {loss} | ratl: {running_average_training_loss}")
                 print(f"{fraction_done*100}% | est time left: {time_taken*(1-fraction_done)/fraction_done} s | est total: {time_taken/fraction_done} s")
