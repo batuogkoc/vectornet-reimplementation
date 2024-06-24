@@ -43,19 +43,22 @@ class PolylineSubgraphLayer(nn.Module):
         
 
 class VectorNet(nn.Module):
-    def __init__(self, initial_node_dims, max_agent_polyline_count=16, max_road_polyline_count=150):
+    def __init__(self, initial_node_dims, hidden_layer_size, prediction_horizon_size, prediction_vector_size, max_agent_polyline_count=16, max_road_polyline_count=150):
         super().__init__()
 
         self.max_agent_polyline_count=max_agent_polyline_count
         self.max_road_polyline_count=max_road_polyline_count
 
-        self.subgraph_layer_1 = PolylineSubgraphLayer(initial_node_dims, 64)
-        self.subgraph_layer_2 = PolylineSubgraphLayer(128, 64)
-        self.subgraph_layer_3 = PolylineSubgraphLayer(128, 64)
+        self.prediction_horizon_size = prediction_horizon_size
+        self.prediction_vector_size = prediction_vector_size
+
+        self.subgraph_layer_1 = PolylineSubgraphLayer(initial_node_dims, hidden_layer_size)
+        self.subgraph_layer_2 = PolylineSubgraphLayer(hidden_layer_size*2, hidden_layer_size)
+        self.subgraph_layer_3 = PolylineSubgraphLayer(hidden_layer_size*2, hidden_layer_size)
 
         self.aggregate = nn.AdaptiveMaxPool1d(1)
-        self.attention = nn.MultiheadAttention(128, 1, batch_first=True)
-        self.trajectory_decoder = nn.Linear(128, initial_node_dims)
+        self.attention = nn.MultiheadAttention(hidden_layer_size*2, 1, batch_first=True)
+        self.trajectory_decoder = nn.Linear(hidden_layer_size*2, prediction_horizon_size*prediction_vector_size)
 
     def forward(self, x: torch.Tensor, agent_polyline_length=None)->torch.Tensor:
         N = x.shape[0]
@@ -89,39 +92,43 @@ class VectorNet(nn.Module):
         mask[~mask_1d] = True
         x, _ = self.attention(x,x,x, attn_mask=(~mask))
 
-        output_mask = torch.broadcast_to(torch.cat((agent_mask, torch.zeros_like(road_mask)), dim=-1).unsqueeze(-1), x.shape)
-        x[~output_mask] = 0
-        x = self.trajectory_decoder(x)
-        x[~torch.any(output_mask, dim=-1)] = 0
+        # output_mask = torch.broadcast_to(torch.cat((agent_mask, torch.zeros_like(road_mask)), dim=-1).unsqueeze(-1), x.shape)
+        # x[~output_mask] = 0
+        x = self.trajectory_decoder(x[:,0])
+        # x[~torch.any(output_mask, dim=-1)] = 0
+        x = torch.unflatten(x, -1, (self.prediction_horizon_size, self.prediction_vector_size))
         return x
     
 if __name__ == "__main__":
-    # torch.manual_seed(42)
+    torch.manual_seed(42)
     # torch.autograd.anomaly_mode.set_detect_anomaly(True)
-    # device = torch.device("cpu")
-    device = torch.device("cuda")
+    device = torch.device("cpu")
+    # device = torch.device("cuda")
 
-    H5_FOLDER_PATH = "../h5_files"
+    # H5_FOLDER_PATH = "../h5_files"
+    H5_FOLDER_PATH = "../AutoBots/h5_files"
 
     train_set = ArgoverseVectornetDataset(os.path.join(H5_FOLDER_PATH, "train_dataset.hdf5"))
-    test_set = ArgoverseVectornetDataset(os.path.join(H5_FOLDER_PATH, "test_dataset.hdf5"))
+    test_set = ArgoverseVectornetDataset(os.path.join(H5_FOLDER_PATH, "val_dataset.hdf5"))
 
     print(len(train_set))
     print(len(test_set))
-    NUM_WORKERS = 2
-    train_loader = DataLoader(train_set, batch_size=64, num_workers=NUM_WORKERS, shuffle=True)
-    test_loader = DataLoader(test_set, batch_size=64, num_workers=NUM_WORKERS, shuffle=True)
+    NUM_WORKERS = 1
+    SHUFFLE = False
+    train_loader = DataLoader(train_set, batch_size=64, num_workers=NUM_WORKERS, shuffle=SHUFFLE)
+    test_loader = DataLoader(test_set, batch_size=64, num_workers=NUM_WORKERS, shuffle=SHUFFLE)
 
     START_EPOCH = 0
 
-    model = VectorNet(6).to(device)
+    model = VectorNet(6, 64, 30, 2).to(device)
     
-    loss_fn = nn.MSELoss(reduction="sum")
+    loss_fn = nn.MSELoss()
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 5, 0.3)
     
-    LOAD_PROGRESS_PATH = "runs/2024-06-20T15:23:33/e-8-train_l-813.9820446734548-test_loss-869.9771018757278.pt"
+    # LOAD_PROGRESS_PATH = "runs/2024-06-20T15:23:33/e-8-train_l-813.9820446734548-test_loss-869.9771018757278.pt"
+    LOAD_PROGRESS_PATH = None
     if LOAD_PROGRESS_PATH:
         CHECKPOINT_FOLDER, _ = os.path.split(LOAD_PROGRESS_PATH)
         path_components = os.path.normpath(LOAD_PROGRESS_PATH).split(os.sep)
@@ -134,13 +141,14 @@ if __name__ == "__main__":
         
         model.load_state_dict(state["model_state_dict"])
         optimizer.load_state_dict(state["optim_state_dict"])
+        scheduler.load_state_dict(state["scheduler_state_dict"])
         print(state.keys())
     else:
         EXPERIMENT_DATE_TIME = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         CHECKPOINT_FOLDER = f"runs/{EXPERIMENT_DATE_TIME}"
 
-    writer = SummaryWriter(f'runs_tensorboard/{EXPERIMENT_DATE_TIME}')
-    os.makedirs(CHECKPOINT_FOLDER, exist_ok=True)
+    # writer = SummaryWriter(f'runs_tensorboard/{EXPERIMENT_DATE_TIME}')
+    # os.makedirs(CHECKPOINT_FOLDER, exist_ok=True)
 
     for epoch in range(START_EPOCH, 25):
         print("-"*5 + f"EPOCH: {epoch}" + "-"*5)
@@ -153,8 +161,8 @@ if __name__ == "__main__":
             y_pred = model(x)
 
             loss = loss_fn(y_pred, y)
-            a = loss_fn(y_pred, y).item()
-
+            print(loss.item())
+            exit()
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -174,7 +182,8 @@ if __name__ == "__main__":
                     "epoch_size": len(train_loader),
                     "model_state_dict": model.state_dict(),
                     "optim_state_dict": optimizer.state_dict(),
-                    "running_average_training_loss": running_average_training_loss ,
+                    "scheduler_state_dict": scheduler.state_dict(),
+                    "running_average_training_loss": running_average_training_loss,
                 }, os.path.join(CHECKPOINT_FOLDER, f"e-{epoch}-i-{i}-mbtl-{loss.item()}-ratl-{running_average_training_loss}.pt"))
 
         train_loss /= len(train_loader.dataset)
@@ -200,6 +209,7 @@ if __name__ == "__main__":
             "epoch": epoch,
             "model_state_dict": model.state_dict(),
             "optim_state_dict": optimizer.state_dict(),
+            "scheduler_state_dict": scheduler.state_dict(),
             "training_loss": train_loss,
             "test_loss": test_loss,
         }, os.path.join(CHECKPOINT_FOLDER, f"e-{epoch}-train_l-{train_loss}-test_loss-{test_loss}.pt"))
