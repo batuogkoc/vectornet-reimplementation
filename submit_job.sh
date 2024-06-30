@@ -25,12 +25,12 @@
 #SBATCH --job-name=Vectornet-BGUNDUZ21
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
-#SBATCH --partition=short
+#SBATCH --partition=mid
 #SBATCH --qos=users
-#SBATCH --mem-per-cpu=4G
-#SBATCH --time=02:00:00
+#SBATCH --mem-per-cpu=16G
+#SBATCH --time=12:00:00
 #SBATCH --output=vectornet.out
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:tesla_v100:1
 
 ################################################################################
 ##################### !!! DO NOT EDIT BELOW THIS LINE !!! ######################

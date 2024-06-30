@@ -98,15 +98,35 @@ class VectorNet(nn.Module):
         # x[~torch.any(output_mask, dim=-1)] = 0
         x = torch.unflatten(x, -1, (self.prediction_horizon_size, self.prediction_vector_size))
         return x
-    
-if __name__ == "__main__":
-    torch.manual_seed(42)
-    # torch.autograd.anomaly_mode.set_detect_anomaly(True)
-    device = torch.device("cpu")
-    # device = torch.device("cuda")
 
-    # H5_FOLDER_PATH = "../h5_files"
-    H5_FOLDER_PATH = "../AutoBots/h5_files"
+def calculate_metrics(y, y_pred):
+    with torch.no_grad():
+        diff = y-y_pred
+
+        displacement = torch.sqrt(torch.sum(diff**2, axis=-1))
+
+        return {
+            "ade": torch.mean(displacement).item(),
+            "de_1": torch.mean(displacement[:, 9]).item(),
+            "de_2": torch.mean(displacement[:, 19]).item(),
+            "de_3": torch.mean(displacement[:, 29]).item(),
+        }
+
+
+
+if __name__ == "__main__":
+    KUACC=True
+    RECORD=True
+    if KUACC:
+        print("-"*10 + "~KUACC~" + "-"*10)
+        device = torch.device("cuda")
+        H5_FOLDER_PATH = "../h5_files"
+
+    else:
+        torch.manual_seed(42)
+        device = torch.device("cpu")
+        H5_FOLDER_PATH = "../AutoBots/h5_files"
+    # torch.autograd.anomaly_mode.set_detect_anomaly(True)
 
     train_set = ArgoverseVectornetDataset(os.path.join(H5_FOLDER_PATH, "train_dataset.hdf5"))
     test_set = ArgoverseVectornetDataset(os.path.join(H5_FOLDER_PATH, "val_dataset.hdf5"))
@@ -147,8 +167,9 @@ if __name__ == "__main__":
         EXPERIMENT_DATE_TIME = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         CHECKPOINT_FOLDER = f"runs/{EXPERIMENT_DATE_TIME}"
 
-    # writer = SummaryWriter(f'runs_tensorboard/{EXPERIMENT_DATE_TIME}')
-    # os.makedirs(CHECKPOINT_FOLDER, exist_ok=True)
+    if RECORD:
+        writer = SummaryWriter(f'runs_tensorboard/{EXPERIMENT_DATE_TIME}')
+        os.makedirs(CHECKPOINT_FOLDER, exist_ok=True)
 
     for epoch in range(START_EPOCH, 25):
         print("-"*5 + f"EPOCH: {epoch}" + "-"*5)
@@ -161,21 +182,23 @@ if __name__ == "__main__":
             y_pred = model(x)
 
             loss = loss_fn(y_pred, y)
-            print(loss.item())
-            exit()
+
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
             train_loss += loss.item()
-            running_average_training_loss = train_loss/max((i*train_loader.batch_size), 1)
-            if i % 10 == 0 and i != 0:
-                writer.add_scalar("running_average_training_loss", running_average_training_loss, epoch*len(train_loader) + i)
+            running_average_training_loss = train_loss/max((i), 1)
+
+            if i % 20 == 0 and i != 0:
                 fraction_done = max(i/len(train_loader), 1e-6)
                 time_taken = (time.time()-start)
                 print(f"i: {i}| loss: {loss} | ratl: {running_average_training_loss}")
                 print(f"{fraction_done*100}% | est time left: {time_taken*(1-fraction_done)/fraction_done} s | est total: {time_taken/fraction_done} s")
-            if i%100 == 0 and i!=0:
+                if RECORD:
+                    writer.add_scalar("running_average_training_loss", running_average_training_loss, epoch*len(train_loader) + i)
+                
+            if i%500 == 0 and i!=0 and RECORD:
                 torch.save({
                     "epoch": epoch,
                     "epoch_progress": i,
@@ -186,9 +209,15 @@ if __name__ == "__main__":
                     "running_average_training_loss": running_average_training_loss,
                 }, os.path.join(CHECKPOINT_FOLDER, f"e-{epoch}-i-{i}-mbtl-{loss.item()}-ratl-{running_average_training_loss}.pt"))
 
-        train_loss /= len(train_loader.dataset)
+        train_loss /= len(train_loader)
 
         test_loss = 0
+        metrics = {
+            "ade": 0,
+            "de_1": 0,
+            "de_2": 0,
+            "de_3": 0,
+        }
         with torch.inference_mode():
             for i, (x, y) in enumerate(test_loader):
                 x, y = x.to(device), y.to(device)
@@ -198,23 +227,40 @@ if __name__ == "__main__":
                 loss = loss_fn(y_pred, y)
                 test_loss += loss.item()
 
-        test_loss /= len(test_loader.dataset)
+                batch_metrics = calculate_metrics(y, y_pred)
+                metrics["ade"] += batch_metrics["ade"]
+                metrics["de_1"] += batch_metrics["de_1"]
+                metrics["de_2"] += batch_metrics["de_2"]
+                metrics["de_3"] += batch_metrics["de_3"]
 
-        writer.add_scalar("train_loss", train_loss, epoch)
-        writer.add_scalar("test_loss", test_loss, epoch)
+        test_loss /= len(test_loader)
+        metrics["ade"] /= len(test_loader)
+        metrics["de_1"] /= len(test_loader)
+        metrics["de_2"] /= len(test_loader)
+        metrics["de_3"] /= len(test_loader)
 
         print(f"train loss: {train_loss} test loss: {test_loss}")
-        
-        torch.save({
-            "epoch": epoch,
-            "model_state_dict": model.state_dict(),
-            "optim_state_dict": optimizer.state_dict(),
-            "scheduler_state_dict": scheduler.state_dict(),
-            "training_loss": train_loss,
-            "test_loss": test_loss,
-        }, os.path.join(CHECKPOINT_FOLDER, f"e-{epoch}-train_l-{train_loss}-test_loss-{test_loss}.pt"))
-
+        print(f"metrics: {metrics}")
         scheduler.step()
+
+        if RECORD:
+            writer.add_scalar("train_loss", train_loss, epoch)
+            writer.add_scalar("test_loss", test_loss, epoch)
+            writer.add_scalar("ade", metrics["ade"], epoch)
+            writer.add_scalar("de_1", metrics["de_1"], epoch)
+            writer.add_scalar("de_2", metrics["de_2"], epoch)
+            writer.add_scalar("de_3", metrics["de_3"], epoch)
+
+            
+            torch.save({
+                "epoch": epoch,
+                "model_state_dict": model.state_dict(),
+                "optim_state_dict": optimizer.state_dict(),
+                "scheduler_state_dict": scheduler.state_dict(),
+                "training_loss": train_loss,
+                "test_loss": test_loss,
+                "metrics": metrics,
+            }, os.path.join(CHECKPOINT_FOLDER, f"e-{epoch}-train_l-{train_loss}-test_l-{test_loss}-ade-{metrics['ade']}.pt"))
         
 
 
